@@ -1,352 +1,124 @@
-# Serverless Express by [Vendia](https://vendia.net/)
+# Example
 
-![Build Status](https://github.com/vendia/serverless-express/workflows/CICD/badge.svg) [![npm](https://img.shields.io/npm/v/@vendia/serverless-express.svg)]() [![npm](https://img.shields.io/npm/dm/aws-serverless-express.svg)]() [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg)](CODE_OF_CONDUCT.md)[![dependencies Status](https://img.shields.io/librariesio/github/vendia/serverless-express)](https://github.com/vendia/serverless-express/blob/master/package.json)
+In addition to a basic Lambda function and Express server, the `example`
+directory includes a [Swagger file](http://swagger.io/specification/),
+[CloudFormation
+template](https://aws.amazon.com/cloudformation/aws-cloudformation-templates/)
+with [Serverless Application Model
+(SAM)](https://github.com/awslabs/serverless-application-model), and helper
+scripts to help you set up and manage your application.
 
-<p align="center">
-  <a href="https://vendia.net/">
-    <img src="https://raw.githubusercontent.com/vendia/serverless-express/mainline/vendia-logo.png" alt="vendia logo" width="100px">
-  </a>
-</p>
+## Steps for running the example
 
-Run REST APIs and other web applications using your existing [Node.js](https://nodejs.org/) application framework (Express, Koa, Hapi, Sails, etc.), on top of [AWS Lambda](https://aws.amazon.com/lambda/) and [Amazon API Gateway](https://aws.amazon.com/api-gateway/) or [Azure Function](https://docs.microsoft.com/en-us/azure/azure-functions/).
+This guide assumes you have already [set up an AWS
+account](http://docs.aws.amazon.com/AmazonSimpleDB/latest/DeveloperGuide/AboutAWSAccounts.html)
+and have the latest version of the [AWS CLI](https://aws.amazon.com/cli/) and
+[AWS SAM](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html)
+installed.
+
+1. From your preferred project directory:
+  ```sh
+    git clone https://github.com/vendia/serverless-express.git && cd serverless-express/examples/basic-starter-api-gateway-v2-typescript
+  ```
+1. Update the `config` section of `package.json` with your `s3BucketName` and
+   `region` (optionally, change the `cloudFormationStackName`). If the bucket
+   you specify does not yet exist, the next step will create it for you.
+1. (optional: domain) If you want to use a custom domain name for your
+   application/API, specify it in the `config.domain` section of `package.json`.
+   This example assumes the domain is registered in Route53 in the same account
+   you're deploying the example to.
+1. Run `npm run setup` - this installs the node dependencies, creates an S3
+   bucket (if it does not already exist), packages and deploys your serverless
+   Express application to AWS Lambda, and creates an API Gateway proxy API.
+1. (optional: domain) If you specify a domain, the example will create an SSL
+   Certificate via Amazon Certificate Manager; create an API Gateway Domain Name
+   record which maps the domain to the API and Stage; and create a Route53
+   HostedZone and RecordSet with an A record pointing at the API Gateway Domain
+   Name's CloudFront Distribution.
+   1. During deployment you should receive an email at one of the registered
+      email addresses for the domain. Approve the SSL Certificate by clicking
+      the link in the email. The stack creation will pause while waiting for
+      this approval.
+   1. Wait for stack creation to complete and update Route53 Domain Name to use
+      the Name Servers from the created Hosted Zone NS Record (don't include the
+      trailing '.') via the AWS console.
+   1. It may take several hours before the DNS records propagate.
+1. After the setup command completes, open the AWS CloudFormation console
+   https://console.aws.amazon.com/cloudformation/home and switch to the region
+   you specified. Select the `ServerlessExpressStack` stack (or the stack name
+   you specified for `cloudFormationStackName`), then click the `ApiUrl` value
+   under the __Outputs__ section - this will open a new page with your running
+   API. The API index lists the resources available in the example Express
+   server (`app.js`), along with example `curl` commands.
+1. (optional) To enable the `invoke-lambda` `package.json` `script`: copy the
+   `LambdaFunctionName` from the CloudFormation Outputs and paste it into the
+   `package.json` `config`'s `functionName` property.
+    Run `npm run invoke-lambda` to invoke the Lambda Function with the payload
+    specified in `api-gateway-event.json`.
+
+See the sections below for details on how to migrate an existing (or create a
+new) Node.js project based on this example. If you would prefer to delete AWS
+assets that were just created, simply run `npm run delete-stack` to delete the
+CloudFormation Stack, including the API and Lambda Function. If you specified a
+new bucket in the `config` command for step 1 and want to delete that bucket,
+run `npm run delete-bucket`.
+
+## Creating or migrating a Node.js project based on the example
+
+To use this example as a base for a new Node.js project:
+
+1. Copy the files in the `examples/basic-starter-api-gateway-v2-typescript`
+   directory into a new project directory (`cp -r
+   ./examples/basic-starter-api-gateway-v2-typescript
+   ~/projects/my-new-node-project`). If you have not already done so, follow the
+   [steps for running the example](#steps-for-running-the-example) (you may want
+   to first modify some of the resource names to something more
+   project-specific, eg. the CloudFormation stack, Lambda function, and API
+   Gateway API).
+1. After making updates to `app.js`, simply run `npm run package-deploy`.
+
+To migrate an existing Node server:
+
+1. Copy the following files from this directory: `api-gateway-event.json`,
+   `sam-template.yaml`, and `lambda.js`. Additionally, copy the `scripts` and
+   `config` sections of `example/package.json` into your existing
+   `package.json` - this includes many helpful commands to manage your AWS
+   serverless assets and perform _basic_ local simulation of API Gateway and
+   Lambda. If you have not already done so, follow the [steps for running the
+   example](#steps-for-running-the-example).
+1. From your existing project directory, run
+  ```sh
+  npm install --save @vendia/serverless-express
+  ```
+1. Modify `lambda.ts` to import your own server configuration (eg. change
+   `require('./app')` to `require('./server')`). You will need to ensure you
+   export your app configuration from the necessary file (eg. `module.exports =
+   app`). This library takes your app configuration and listens on a Unix Domain
+   Socket for you, so you can remove your call to `app.listen()`.
+1. Modify the `CodeUri` property of the Lambda function resource in
+   `sam-template.yaml` to point to your application directory (e.g. `CodeUri:
+   ./src`). If you are using a build tool (e.g. Gulp, Grunt, Webpack, Rollup,
+   etc.), you will instead want to point to your build output directory.
+1. Run `npm run package-deploy`.
+
+To perform a basic, local simulation of API Gateway and Lambda with your Node
+server, update `api-gateway-event.json` with some values that are valid for your
+server (`httpMethod`, `path`, `body` etc.) and run `npm run local`.
+
+If you need to make modifications to your API Gateway API or other AWS
+resources, modify `sam-template.yaml` and run `npm run package-deploy`.
+
+## Node.js version
+
+This example was written against Node.js 12
+
+## Development
+
+To update this example against the latest local changes to
+@vendia/serverless-express:
 
 ```bash
-npm install @vendia/serverless-express
+npm i ../..
+npm run build
+npm run local
 ```
-
-## Quick Start/Example
-
-Want to get up and running quickly? [Check out our basic starter example](examples/basic-starter-api-gateway-v1) that includes:
-
-- Lambda function
-- Express application
-- [Serverless Application Model (SAM)](https://github.com/awslabs/serverless-application-model)/[CloudFormation](https://aws.amazon.com/cloudformation/aws-cloudformation-templates/) template
-- Helper scripts to configure, deploy, and manage your application
-
-If you want to migrate an existing application to AWS Lambda, it's advised to get the minimal example up and running first, and then copy your application source in.
-
-## AWS
-
-### Minimal Lambda handler wrapper
-
-The only AWS Lambda specific code you need to write is a simple handler like below. All other code you can write as you normally do.
-
-```js
-// lambda.js
-const serverlessExpress = require('@vendia/serverless-express')
-const app = require('./app')
-exports.handler = serverlessExpress({ app })
-```
-
-### Async setup Lambda handler
-
-If your application needs to perform some common bootstrap tasks such as connecting to a database before the request is forward to the API, you can use the following pattern (also available in [this example](https://github.com/vendia/serverless-express/blob/mainline/examples/basic-starter-api-gateway-v2/src/lambda-async-setup.js)):
-
-```js
-// lambda.js
-require('source-map-support/register')
-const serverlessExpress = require('@vendia/serverless-express')
-const app = require('./app')
-
-let serverlessExpressInstance
-
-function asyncTask () {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve('connected to database'), 1000)
-  })
-}
-
-async function setup (event, context) {
-  const asyncValue = await asyncTask()
-  console.log(asyncValue)
-  serverlessExpressInstance = serverlessExpress({ app })
-  return serverlessExpressInstance(event, context)
-}
-
-function handler (event, context) {
-  if (serverlessExpressInstance) return serverlessExpressInstance(event, context)
-
-  return setup(event, context)
-}
-
-exports.handler = handler
-```
-
-## Azure
-
-### Async Azure Function (v3) handler wrapper
-
-The only Azure Function specific code you need to write is a simple `index.js` and a `function.json` like below.
-
-```js
-// index.js
-const serverlessExpress = require('@vendia/serverless-express')
-const app = require('./app')
-const cachedServerlessExpress = serverlessExpress({ app })
-
-module.exports = async function (context, req) {
-  return cachedServerlessExpress(context, req)
-}
-```
-
-The _out-binding_ parameter `"name": "$return"` is important for Serverless Express to work.
-
-```json
-// function.json
-{
-  "bindings": [
-    {
-      "authLevel": "anonymous",
-      "type": "httpTrigger",
-      "direction": "in",
-      "name": "req",
-      "route": "{*segments}"
-    },
-    {
-      "type": "http",
-      "direction": "out",
-      "name": "$return"
-    }
-  ]
-}
-```
-
-## 4.x
-
-1. Improved API - Simpler for end-user to use and configure.
-1. Promise resolution mode by default. Can specify `resolutionMode` to use `"CONTEXT"` or `"CALLBACK"`
-1. Additional event sources - API Gateway V1 (REST API), API Gateway V2 (HTTP API), ALB, Lambda@Edge
-1. Custom event source - If you have another event source you'd like to use that we don't natively support, check out the [DynamoDB Example](examples/custom-mapper-dynamodb)
-1. Implementation uses mock Request/Response objects instead of running a server listening on a local socket. Thanks to @dougmoscrop from https://github.com/dougmoscrop/serverless-http
-1. Automatic `isBase64Encoded` without specifying `binaryMimeTypes`. Use `binarySettings` to customize. Thanks to @dougmoscrop from https://github.com/dougmoscrop/serverless-http
-1. `respondWithErrors` makes it easier to debug during development
-1. Node.js 12+
-1. Improved support for custom domain names
-
-See [UPGRADE.md](UPGRADE.md) to upgrade from aws-serverless-express and @vendia/serverless-express 3.x
-
-## API
-
-### binarySettings
-
-Determine if the response should be base64 encoded before being returned to the event source, for example, when returning images or compressed files. This is necessary due to API Gateway and other event sources not being capable of handling binary responses directly. The event source is then responsible for turning this back into a binary format before being returned to the client.
-
-By default, this is determined based on the `content-encoding` and `content-type` headers returned by your application. If you need additional control over this, you can specify `binarySettings`.
-
-```js
-{
-  binarySettings: {
-    isBinary: ({ headers }) => true,
-    contentTypes: ['image/*'],
-    contentEncodings: []
-  }
-}
-```
-
-Any value you provide here should also be specified on API Gateway API. In SAM, this looks like:
-
-```yaml
-ExpressApi:
-  Type: AWS::Serverless::Api
-  Properties:
-    StageName: prod
-    BinaryMediaTypes: ['image/*']
-```
-
-### resolutionMode (default: `'PROMISE'`)
-
-Lambda supports three methods to end the execution and return a result: context, callback, and promise. By default, serverless-express uses promise resolution, but you can specify 'CONTEXT' or 'CALLBACK' if you need to change this. If you specify 'CALLBACK', then `context.callbackWaitsForEmptyEventLoop = false` is also set for you.
-
-```js
-serverlessExpress({
-  app,
-  resolutionMode: 'CALLBACK'
-})
-```
-
-### respondWithErrors (default: `process.env.NODE_ENV === 'development'`)
-
-Set this to true to have serverless-express include the error stack trace in the event of an unhandled exception. This is especially useful during development. By default, this is enabled when `NODE_ENV === 'development'` so that the stack trace isn't returned in production.
-
-## Advanced API
-
-### eventSource
-
-serverless-express natively supports API Gateway, ALB, and Lambda@Edge. If you want to use Express with other AWS Services integrated with Lambda you can provide your own custom request/response mappings via `eventSource`. See the [custom-mapper-dynamodb example](examples/custom-mapper-dynamodb).
-
-```js
-function requestMapper ({ event }) {
-  // Your logic here...
-
-  return {
-    method,
-    path,
-    headers
-  }
-}
-
-function responseMapper ({
-  statusCode,
-  body,
-  headers,
-  isBase64Encoded
-}) {
-  // Your logic here...
-
-  return {
-    statusCode,
-    body,
-    headers,
-    isBase64Encoded
-  }
-}
-
-serverlessExpress({
-  app,
-  eventSource: {
-    getRequest: requestMapper,
-    getResponse: responseMapper
-  }
-})
-```
-
-#### eventSourceRoutes
-
-A single function can be configured to handle additional kinds of AWS events:
-- SNS
-- DynamoDB Streams
-- SQS
- - EventBridge Events (formerlly CloudWatch Events)
-
-Assuming the following function configuration in `serverless.yml`:
-
-```yaml
-functions:
-  lambda-handler:
-    handler: src/lambda.handler
-    events:
-      - http:
-          path: /
-          method: get
-      - sns:
-          topicName: my-topic
-      - stream:
-          type: dynamodb
-          arn: arn:aws:dynamodb:us-east-1:012345678990:table/my-table/stream/2021-07-15T15:05:51.683
-      - sqs:
-          arn: arn:aws:sqs:us-east-1:012345678990:myQueue
-      - eventBridge:
-          pattern:
-            source:
-              - aws.cloudformation
-```
-
-And the following configuration:
-
-```js
-serverlessExpress({
-  app,
-  eventSourceRoutes: {
-    'AWS_SNS': '/sns',
-    'AWS_DYNAMODB': '/dynamodb',
-    'AWS_SQS': '/sqs'
-    'AWS_EVENTBRIDGE': '/eventbridge',
-  }
-})
-```
-
-Alternatively, to handle only SNS events (the keys in the map are **optional**)
-
-```js
-serverlessExpress({
-  app,
-  eventSourceRoutes: {
-    'AWS_SNS': '/sns',
-  }
-})
-```
-
-Events will `POST` to the routes configured.
-
-Also, to ensure the events propagated from an internal event and not externally, it is **highly recommended** to 
-ensure the `Host` header matches:
-
-
-- SNS: `sns.amazonaws.com`
-- DynamoDB: `dynamodb.amazonaws.com`
-- SQS: `sqs.amazonaws.com`
-- EventBridge: `events.amazonaws.com`
-
-### logSettings
-
-Specify log settings that are passed to the default logger. Currently, you can only set the log `level`.
-
-```js
-{
-  logSettings: {
-    level: 'debug' // default: 'error'
-  }
-}
-```
-
-### log
-
-Provide a custom `log` object with `info`, `debug` and `error` methods. For example, you could override the default with a [Winston log](https://www.npmjs.com/package/winston) instance.
-
-```js
-{
-  log: {
-    info (message, additional) {
-      console.info(message, additional)
-    },
-    debug (message, additional) {
-      console.debug(message, additional)
-    },
-    error (message, additional) {
-      console.error(message, additional)
-    }
-  }
-}
-```
-
-## Accessing the event and context objects
-
-This package exposes a function to easily get the `event` and `context` objects Lambda receives from the event source.
-
-```js
-const { getCurrentInvoke } = require('@vendia/serverless-express')
-app.get('/', (req, res) => {
-  const { event, context } = getCurrentInvoke()
-
-  res.json(event)
-})
-```
-
-## Why run Express in a Serverless environment
-
-- Only pay for what you use
-- No infrastructure to manage
-- Auto-scaling with zero configuration
-- [Usage Plans](http://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-api-usage-plans.html)
-- [Caching](http://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-caching.html)
-- [Authorization](http://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-control-access-to-api.html)
-- [Staging](http://docs.aws.amazon.com/apigateway/latest/developerguide/how-to-deploy-api.html)
-- [SDK Generation](http://docs.aws.amazon.com/apigateway/latest/developerguide/how-to-generate-sdk.html)
-- [API Monitoring](http://docs.aws.amazon.com/apigateway/latest/developerguide/monitoring-cloudwatch.html)
-- [Request Validation](http://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-method-request-validation.html)
-- [Documentation](http://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-documenting-api.html)
-
-## Loadtesting
-
-`npx loadtest --rps 100 -k -n 1500 -c 50 https://xxxx.execute-api.us-east-1.amazonaws.com/prod/users`
-
-# AWS Serverless Express has moved
-
-On 11/30, the AWS Serverless Express library moved from AWS to [Vendia](https://github.com/vendia/serverless-express) and will be rebranded to `@vendia/serverless-express`. Similarly, the [`aws-serverless-express` NPM package](https://www.npmjs.com/package/aws-serverless-express) will be deprecated in favor of [@vendia/serverless-express](https://www.npmjs.com/package/@vendia/serverless-express). 
-
-[Brett](https://github.com/brettstack), the original creator of the Serverless Express library, will continue maintaining the repository and give it the attention and care it deserves. At the same time, we will be looking for additional contributors to participate in the development and stewardship of the Serverless Express library. AWS and the [SAM team](https://github.com/aws/aws-sam-cli) will remain involved in an administrative role alongside Vendia, Brett, and the new maintainers that will join the project.
-
-We believe this is the best course of action to ensure that customers using this library get the best possible support in the future. To learn more about this move or become a maintainer of the new Serverless Express library, reach out to us through a GitHub issue on this repository. 
-
-Best,
-  The AWS Serverless team, Brett & the Vendia team
