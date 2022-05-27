@@ -1,107 +1,35 @@
-import cors from "cors";
-import express, { Request, Response } from "express";
-import path from "path";
-import compression from "compression";
-import { getCurrentInvoke } from "@vendia/serverless-express";
+import express from 'express';
+import fs from 'fs';
+import path from 'path';
 
-const ejs = require("ejs").__express;
+// Create an Express object and routes (in order)
 const app = express();
-const router = express.Router();
 
-app.set("view engine", "ejs");
-app.engine(".ejs", ejs);
+// Serve static files of web-build at /
+// TODO: should probably use the vercel server
+app.use('/', express.static('web-build'));
 
-router.use(compression());
-router.use(cors());
-router.use(express.json());
-router.use(express.urlencoded({ extended: true }));
+const FUNCTIONS_DIRNAME = 'functions';
+const files = fs.readdirSync(FUNCTIONS_DIRNAME); // cwd of process
+for (const file of files) {
+  const filenameNoExtension = path.parse(file).name;
+  if (filenameNoExtension === '.gitignore') {
+    continue;
+  }
 
-// NOTE: tests can't find the views directory without this
-app.set("views", path.join(__dirname, "views"));
+  const relativePathToIndex = path.join(FUNCTIONS_DIRNAME, filenameNoExtension); // index is one directory down from functions
+  try {
+    const userDefinedModule = require(relativePathToIndex);
+    // Mount at route '/functions/moduleName'
+    const mountedPath = path.join('/', FUNCTIONS_DIRNAME, filenameNoExtension).toString();
+    app.use(mountedPath, userDefinedModule.default);
 
-router.get("/", (req: Request, res: Response) => {
-  const currentInvoke = getCurrentInvoke();
-  const { event = {} } = currentInvoke;
-  const { requestContext = {} } = event;
-  const { domainName = "localhost:3000" } = requestContext;
-  const apiUrl = `https://${domainName}`;
-  return res.render("index", {
-    apiUrl,
-  });
-});
+    console.log('Function mounted at:', mountedPath);
+  } catch (e) {
+    console.error(`Error mounting function ${filenameNoExtension}`, e);
+  }
+}
 
-router.get("/vendia", (req: Request, res: Response) => {
-  return res.sendFile(path.join(__dirname, "vendia-logo.png"));
-});
+// Set our GCF handler to our Express app.
+export {app};
 
-router.get("/users", (req: Request, res: Response) => {
-  return res.json(users);
-});
-
-router.get("/users/:userId", (req: Request, res: Response) => {
-  const user = getUser(req.params.userId);
-
-  if (!user) return res.status(404).json({});
-
-  return res.json(user);
-});
-
-router.post("/users", (req: Request, res: Response) => {
-  const user = {
-    id: ++userIdCounter,
-    name: req.body.name,
-  };
-  users.push(user);
-  return res.status(201).json(user);
-});
-
-router.put("/users/:userId", (req: Request, res: Response) => {
-  const user = getUser(req.params.userId);
-
-  if (!user) return res.status(404).json({});
-
-  user.name = req.body.name;
-  return res.json(user);
-});
-
-router.delete("/users/:userId", (req: Request, res: Response) => {
-  const userIndex = getUserIndex(req.params.userId);
-
-  if (userIndex === -1) return res.status(404).json({});
-
-  users.splice(userIndex, 1);
-  return res.json(users);
-});
-
-router.get("/cookie", (req: Request, res: Response) => {
-  res.cookie("Foo", "bar");
-  res.cookie("Fizz", "buzz");
-  return res.json({});
-});
-
-const getUser = (userId: string) =>
-  users.find((u) => u.id === parseInt(userId));
-
-const getUserIndex = (userId: string) =>
-  users.findIndex((u) => u.id === parseInt(userId));
-
-// Ephemeral in-memory data store
-const users = [
-  {
-    id: 1,
-    name: "Joe",
-  },
-  {
-    id: 2,
-    name: "Jane",
-  },
-];
-
-let userIdCounter = users.length;
-
-// The serverless-express library creates a server and listens on a Unix
-// Domain Socket for you, so you can remove the usual call to app.listen.
-// app.listen(3000)
-app.use("/", router);
-
-export { app };
