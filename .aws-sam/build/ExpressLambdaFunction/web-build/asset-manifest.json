@@ -1,0 +1,35 @@
+{
+  "files": {
+    "app.js": "https://us-east1-eas-functions.cloudfunctions.net/quintest113-functions-demo/static/js/app.1da07e56.chunk.js",
+    "app.js.map": "https://us-east1-eas-functions.cloudfunctions.net/quintest113-functions-demo/static/js/app.1da07e56.chunk.js.map",
+    "runtime~app.js": "https://us-east1-eas-functions.cloudfunctions.net/quintest113-functions-demo/static/js/runtime~app.f8dc28c9.js",
+    "runtime~app.js.map": "https://us-east1-eas-functions.cloudfunctions.net/quintest113-functions-demo/static/js/runtime~app.f8dc28c9.js.map",
+    "static/js/2.b63f4978.chunk.js": "https://us-east1-eas-functions.cloudfunctions.net/quintest113-functions-demo/static/js/2.b63f4978.chunk.js",
+    "static/js/2.b63f4978.chunk.js.map": "https://us-east1-eas-functions.cloudfunctions.net/quintest113-functions-demo/static/js/2.b63f4978.chunk.js.map",
+    "fonts/AntDesign.ttf": "https://us-east1-eas-functions.cloudfunctions.net/quintest113-functions-demo/./fonts/AntDesign.ttf",
+    "fonts/Entypo.ttf": "https://us-east1-eas-functions.cloudfunctions.net/quintest113-functions-demo/./fonts/Entypo.ttf",
+    "fonts/Feather.ttf": "https://us-east1-eas-functions.cloudfunctions.net/quintest113-functions-demo/./fonts/Feather.ttf",
+    "fonts/FontAwesome.ttf": "https://us-east1-eas-functions.cloudfunctions.net/quintest113-functions-demo/./fonts/FontAwesome.ttf",
+    "fonts/FontAwesome5_Brands.ttf": "https://us-east1-eas-functions.cloudfunctions.net/quintest113-functions-demo/./fonts/FontAwesome5_Brands.ttf",
+    "fonts/FontAwesome5_Solid.ttf": "https://us-east1-eas-functions.cloudfunctions.net/quintest113-functions-demo/./fonts/FontAwesome5_Solid.ttf",
+    "fonts/Fontisto.ttf": "https://us-east1-eas-functions.cloudfunctions.net/quintest113-functions-demo/./fonts/Fontisto.ttf",
+    "fonts/Foundation.ttf": "https://us-east1-eas-functions.cloudfunctions.net/quintest113-functions-demo/./fonts/Foundation.ttf",
+    "fonts/Ionicons.ttf": "https://us-east1-eas-functions.cloudfunctions.net/quintest113-functions-demo/./fonts/Ionicons.ttf",
+    "fonts/MaterialCommunityIcons.ttf": "https://us-east1-eas-functions.cloudfunctions.net/quintest113-functions-demo/./fonts/MaterialCommunityIcons.ttf",
+    "fonts/MaterialIcons.ttf": "https://us-east1-eas-functions.cloudfunctions.net/quintest113-functions-demo/./fonts/MaterialIcons.ttf",
+    "fonts/SimpleLineIcons.ttf": "https://us-east1-eas-functions.cloudfunctions.net/quintest113-functions-demo/./fonts/SimpleLineIcons.ttf",
+    "fonts/SpaceMono-Regular.ttf": "https://us-east1-eas-functions.cloudfunctions.net/quintest113-functions-demo/./fonts/SpaceMono-Regular.ttf",
+    "favicon-16.png": "https://us-east1-eas-functions.cloudfunctions.net/quintest113-functions-demo/favicon-16.png",
+    "favicon-32.png": "https://us-east1-eas-functions.cloudfunctions.net/quintest113-functions-demo/favicon-32.png",
+    "favicon.ico": "https://us-east1-eas-functions.cloudfunctions.net/quintest113-functions-demo/favicon.ico",
+    "index.html": "https://us-east1-eas-functions.cloudfunctions.net/quintest113-functions-demo/index.html",
+    "manifest.json": "https://us-east1-eas-functions.cloudfunctions.net/quintest113-functions-demo/manifest.json",
+    "serve.json": "https://us-east1-eas-functions.cloudfunctions.net/quintest113-functions-demo/serve.json",
+    "static/js/2.b63f4978.chunk.js.LICENSE.txt": "https://us-east1-eas-functions.cloudfunctions.net/quintest113-functions-demo/static/js/2.b63f4978.chunk.js.LICENSE.txt"
+  },
+  "entrypoints": [
+    "static/js/runtime~app.f8dc28c9.js",
+    "static/js/2.b63f4978.chunk.js",
+    "static/js/app.1da07e56.chunk.js"
+  ]
+}
